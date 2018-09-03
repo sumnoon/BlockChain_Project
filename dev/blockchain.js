@@ -49,37 +49,41 @@ class BlockChain {
 		return this.getLastBlock()['index'] + 1;
 	}
 
-	hashBlock(previousBlockHash, currentBLockData, nonce) {
+	hashBlock(previousBlockHash, currentBlockData, nonce) {
 		// body...
-		const dataAsString = previousBlockHash + nonce.toString() + JSON.stringify(currentBLockData);
+		const dataAsString = previousBlockHash + nonce.toString() + JSON.stringify(currentBlockData);
 		const hash = sha256(dataAsString);
 		return hash;
 	}
 
-	proofOfWork(previousBlockHash, currentBLockData) {
+	proofOfWork(previousBlockHash, currentBlockData) {
 		// vote.hashBlock(prviousBLockHash, currentBlockData, nonce);
 		// repeatedly hash block until it finds correct hash => '000O1ANDHUVVNDHFD'
 		// uses current block data fo rthe hash, but also the previousBLockHash
 		// continuously change nonce value until it finds the correct hash
 		// returns to us the nonce vaule that creates the correct hash
 		let nonce = 0;
-		let hash = this.hashBlock(previousBlockHash, currentBLockData, nonce);
+		let hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
 		while(hash.substring(0, 4) != '0000'){
 			nonce++;
-			hash = this.hashBlock(previousBlockHash, currentBLockData, nonce);
+			hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
 			//console.log(hash);
 		}
 		return nonce;
 	}
 	chainIsValid (vote) {
 		let validChain = true;
-		for (var i = 1; i < vote.length && validChain; i++ ) {
-			const currentBlcok = vote[i];
+
+		for (var i = 1; i < vote.length; i++ ) {
+			const currentBlock = vote[i];
 			const prevBlock = vote[i - 1];
-			const blockHash = this.hashBlock(prevBlock['hash'], { transactions: currentBlockData, nonce: nonce});
-			if ( blockHash.substring(0,4) !== '0000')validChain = false;
-			if ( currentBlcok['previousBlockHash'] !== prevBlock['hash']) validChain = false;
-			if ( !validChain ) return validChain;
+			console.log(currentBlock);
+			console.log(prevBlock);
+			const blockHash = this.hashBlock(prevBlock['hash'], { transactions: currentBlock['transactions'], index: currentBlock['index'] }, currentBlock['nonce']);
+			if ( blockHash.substring(0,4) !== '0000'){
+				validChain = false;
+			}
+			if ( currentBlock['previousBlockHash'] !== prevBlock['hash']) validChain = false;
 		}
 
 		const genesisBLock = vote[0];
@@ -89,8 +93,8 @@ class BlockChain {
 		const correctTransactions = genesisBLock['transactions'].length === 0;
 
 		if( !correctNonce || !correctPreviousBlockHash || !correctHash || !correctTransactions ) validChain = false;
+		
 		return validChain; 
-
 	}
 }
 
