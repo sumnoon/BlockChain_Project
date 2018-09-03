@@ -14,25 +14,26 @@ const vote = new Blockchain();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// get enitre blockchain
-app.get('/blockchain', function(req, res){
-	res.send(vote);
+// get entire blockchain
+app.get('/blockchain', function (req, res) {
+  res.send(vote);
 });
+
 
 // create a new transaction
 app.post('/transaction', function(req, res) {
 	const newTransaction = req.body;
-	const blockIndex = vote.addTransactionToPendingTransaction(newTransaction);
-	res.json({ note: `Transaction will be added in block ${blockIndex}.` })
+	const blockIndex = vote.addTransactionToPendingTransactions(newTransaction);
+	res.json({ note: `Transaction will be added in block ${blockIndex}.` });
 });
 
-// create a new transaction
-// broadcast the transaction to all other network
+
+// broadcast transaction
 app.post('/transaction/broadcast', function(req, res) {
 	const newTransaction = vote.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
-	vote.addTransactionToPendingTransaction(newTransaction);
+	vote.addTransactionToPendingTransactions(newTransaction);
 
-	const requestPromises = []
+	const requestPromises = [];
 	vote.networkNodes.forEach(networkNodeUrl => {
 		const requestOptions = {
 			uri: networkNodeUrl + '/transaction',
@@ -42,26 +43,27 @@ app.post('/transaction/broadcast', function(req, res) {
 		};
 
 		requestPromises.push(rp(requestOptions));
-	})
+	});
 
 	Promise.all(requestPromises)
 	.then(data => {
-		res.json({ note: 'Transaction created and broadcast successfully' });
+		res.json({ note: 'Transaction created and broadcast successfully.' });
 	});
 });
 
-// mine a new block
-app.get('/mine', function(req, res){
+
+// mine a block
+app.get('/mine', function(req, res) {
 	const lastBlock = vote.getLastBlock();
 	const previousBlockHash = lastBlock['hash'];
 	const currentBlockData = {
-		transaction: vote.pendingTransactions,
+		transactions: vote.pendingTransactions,
 		index: lastBlock['index'] + 1
 	};
-	const nonce = vote.proofOfWork(previousBlockHash, currentBlockData );
+	const nonce = vote.proofOfWork(previousBlockHash, currentBlockData);
 	const blockHash = vote.hashBlock(previousBlockHash, currentBlockData, nonce);
 	const newBlock = vote.createNewBlock(nonce, previousBlockHash, blockHash);
-	
+
 	const requestPromises = [];
 	vote.networkNodes.forEach(networkNodeUrl => {
 		const requestOptions = {
@@ -97,12 +99,12 @@ app.get('/mine', function(req, res){
 	});
 });
 
-// to recive new block
 
-app.post('/receive-new-block', function(req, res) { 
+// receive new block
+app.post('/receive-new-block', function(req, res) {
 	const newBlock = req.body.newBlock;
 	const lastBlock = vote.getLastBlock();
-	const correctHash = lastBlock.hash === newBlock.previousBlockHash;
+	const correctHash = lastBlock.hash === newBlock.previousBlockHash; 
 	const correctIndex = lastBlock['index'] + 1 === newBlock['index'];
 
 	if (correctHash && correctIndex) {
@@ -118,24 +120,23 @@ app.post('/receive-new-block', function(req, res) {
 			newBlock: newBlock
 		});
 	}
-
 });
 
-// register a node and broadcast it to the entire network
-app.post('/register-and-broadcast-node', function(req, res){
+
+// register a node and broadcast it the network
+app.post('/register-and-broadcast-node', function(req, res) {
 	const newNodeUrl = req.body.newNodeUrl;
-	if (vote.networkNodes.indexOf(newNodeUrl) == -1)vote.networkNodes.push(newNodeUrl);
-	//-----Broadcast
+	if (vote.networkNodes.indexOf(newNodeUrl) == -1) vote.networkNodes.push(newNodeUrl);
 
 	const regNodesPromises = [];
-	vote.networkNodes.forEach(networkNodesUrl => {
+	vote.networkNodes.forEach(networkNodeUrl => {
 		const requestOptions = {
-			uri: networkNodesUrl + '/register-node',
+			uri: networkNodeUrl + '/register-node',
 			method: 'POST',
 			body: { newNodeUrl: newNodeUrl },
 			json: true
 		};
-		
+
 		regNodesPromises.push(rp(requestOptions));
 	});
 
@@ -151,22 +152,23 @@ app.post('/register-and-broadcast-node', function(req, res){
 		return rp(bulkRegisterOptions);
 	})
 	.then(data => {
-		res.json({ note: 'New node registered with network successfully' });
+		res.json({ note: 'New node registered with network successfully.' });
 	});
 });
 
+
 // register a node with the network
-app.post('/register-node', function(req, res){
+app.post('/register-node', function(req, res) {
 	const newNodeUrl = req.body.newNodeUrl;
 	const nodeNotAlreadyPresent = vote.networkNodes.indexOf(newNodeUrl) == -1;
 	const notCurrentNode = vote.currentNodeUrl !== newNodeUrl;
 	if (nodeNotAlreadyPresent && notCurrentNode) vote.networkNodes.push(newNodeUrl);
-	res.json({ note: 'New node registered successful.' });
+	res.json({ note: 'New node registered successfully.' });
 });
 
 
 // register multiple nodes at once
-app.post('/register-nodes-bulk', function(req, res){
+app.post('/register-nodes-bulk', function(req, res) {
 	const allNetworkNodes = req.body.allNetworkNodes;
 	allNetworkNodes.forEach(networkNodeUrl => {
 		const nodeNotAlreadyPresent = vote.networkNodes.indexOf(networkNodeUrl) == -1;
@@ -177,6 +179,52 @@ app.post('/register-nodes-bulk', function(req, res){
 	res.json({ note: 'Bulk registration successful.' });
 });
 
+
+// consensus
+app.get('/consensus', function(req, res) {
+	const requestPromises = [];
+	vote.networkNodes.forEach(networkNodeUrl => {
+		const requestOptions = {
+			uri: networkNodeUrl + '/blockchain',
+			method: 'GET',
+			json: true
+		};
+
+		requestPromises.push(rp(requestOptions));
+	});
+
+	Promise.all(requestPromises)
+	.then(blockchains => {
+		const currentChainLength = vote.chain.length;
+		let maxChainLength = currentChainLength;
+		let newLongestChain = null;
+		let newPendingTransactions = null;
+
+		blockchains.forEach(blockchain => {
+			if (blockchain.chain.length > maxChainLength) {
+				maxChainLength = blockchain.chain.length;
+				newLongestChain = blockchain.chain;
+				newPendingTransactions = blockchain.pendingTransactions;
+			};
+		});
+
+
+		if (!newLongestChain || (newLongestChain && !vote.chainIsValid(newLongestChain))) {
+			res.json({
+				note: 'Current chain has not been replaced.',
+				chain: vote.chain
+			});
+		}
+		else {
+			vote.chain = newLongestChain;
+			vote.pendingTransactions = newPendingTransactions;
+			res.json({
+				note: 'This chain has been replaced.',
+				chain: vote.chain
+			});
+		}
+	});
+});
 
 app.listen(port, function(){
 	console.log(`Listening on port ${port}...`);

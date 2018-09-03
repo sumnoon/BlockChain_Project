@@ -44,7 +44,7 @@ class BlockChain {
 		return newTransaction;
 	}
 
-	addTransactionToPendingTransaction(transactionObj) {
+	addTransactionToPendingTransactions(transactionObj) {
 		this.pendingTransactions.push(transactionObj);
 		return this.getLastBlock()['index'] + 1;
 	}
@@ -58,7 +58,7 @@ class BlockChain {
 
 	proofOfWork(previousBlockHash, currentBlockData) {
 		// vote.hashBlock(prviousBLockHash, currentBlockData, nonce);
-		// repeatedly hash block until it finds correct hash => '000O1ANDHUVVNDHFD'
+		// repeatedly hash block until it finds correct hash 
 		// uses current block data fo rthe hash, but also the previousBLockHash
 		// continuously change nonce value until it finds the correct hash
 		// returns to us the nonce vaule that creates the correct hash
@@ -77,8 +77,6 @@ class BlockChain {
 		for (var i = 1; i < vote.length; i++ ) {
 			const currentBlock = vote[i];
 			const prevBlock = vote[i - 1];
-			console.log(currentBlock);
-			console.log(prevBlock);
 			const blockHash = this.hashBlock(prevBlock['hash'], { transactions: currentBlock['transactions'], index: currentBlock['index'] }, currentBlock['nonce']);
 			if ( blockHash.substring(0,4) !== '0000'){
 				validChain = false;
