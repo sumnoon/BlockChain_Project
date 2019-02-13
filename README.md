@@ -1,5 +1,7 @@
 # BlockChain_Project
 
+Test Test Test
+
 Update 3/09/2018 Solved the chainIsValid method but no idea how
 
 Update 3/09/2018 hash is not calculated perfectly in chain is valid method.
