@@ -218,3 +218,80 @@ class Current_User():
     def set_user_type(self, user_type):
         self.user_type = user_type
 
+app = Flask(__name__)
+CORS(app)
+
+blockchain = Blockchain()
+curr_user = Current_User('test', 'test')
+
+@app.route('/')
+def index():
+    return render_template('./index.html')
+
+
+@app.route('/signin', methods = ['POST'])
+def signin():
+    
+    curr_user.update(request.form['username'], request.form['password'])
+    
+    usr = User()
+    
+    validate = usr.validate_user()
+
+    if(validate == True):
+        if curr_user.user_type == 1:
+            return render_template("admin_dashboard.html")
+        else:
+            return render_template("user_dashboard.html")
+    else:
+        return render_template("index.html")
+
+
+@app.route('/dashboard')
+def dashboard():
+    if curr_user.user_type == 1:
+            return render_template("admin_dashboard.html")
+    else:
+        return render_template("user_dashboard.html")
+
+
+@app.route('/addvoter')
+def addvoter():
+    return render_template("add_voter.html")
+
+
+@app.route('/addcandidate')
+def addcandidate():
+    return render_template("add_candidate.html")
+
+
+@app.route('/addvote')
+def addvote():
+    return render_template("add_vote.html")
+
+
+@app.route('/view_result')
+def vote_result():
+    return render_template("view_result.html")
+
+
+@app.route('/view_voters')
+def view_voters():
+    return render_template("view_voters.html")
+
+
+@app.route('/view_candidates')
+def view_candidates():
+    return render_template("view_candidates.html")
+
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
+    args = parser.parse_args()
+    port = args.port
+
+    app.run(host='127.0.0.1', port=port)
