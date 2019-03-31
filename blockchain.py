@@ -121,3 +121,56 @@ class Blockchain:
 
         return True
 
+class User:
+
+    def __init__(self):
+        self.accounts = []
+        self.load_account()
+
+
+    def load_account(self):
+        with open('user.json') as users:  
+            accounts = json.load(users)
+            for account in accounts:
+                self.accounts.append(account) 
+        
+        # print(self.accounts)
+        
+    
+    def add_account(self, user_name, user_password, voted):
+        
+        account = {
+            'user_id': len(self.accounts) + 1,
+            'user_name': user_name,
+            'user_password': user_password,
+            'voted': False, 
+            'user_type': 0
+        }
+
+        self.accounts.append(account)
+        
+        with open('user.json', 'w') as outfile:  
+            json.dump(self.accounts, outfile)
+
+    
+    def update_voted(self, user_id):
+        
+        index = 0
+        for account in self.accounts:
+            if(account['user_id'] == user_id):
+                self.accounts[index]['voted'] = True
+                with open('user.json', 'w') as outfile:  
+                    json.dump(self.accounts, outfile)
+                return
+            index += 1
+
+    def validate_user(self):
+        username = curr_user.user_name
+        user_password = curr_user.password
+        for account in self.accounts:
+            if(account['user_name'] == username):
+                if(account['user_password'] == user_password):
+                    curr_user.set_user_type(account['user_type'])
+                    return True
+                return False
+        return False 
