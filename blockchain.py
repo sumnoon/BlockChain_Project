@@ -174,3 +174,47 @@ class User:
                     return True
                 return False
         return False 
+
+    class Candidate:
+
+    def __init__(self):
+        self.candidates = []
+        self.load_candidate()
+
+
+    def load_candidate(self):
+        with open('candidate.json') as candidates:  
+            all_candidate = json.load(candidates)
+            for candidate in all_candidate:
+                self.candidates.append(candidate) 
+        
+        print(self.candidates)
+
+    
+    def add_candidate(self, candidate_name):
+        
+        candidate = {
+            'candidate_id': len(self.candidates) + 1,
+            'candidate_name': candidate_name,
+            'vote_count': 0
+        }
+
+        self.candidates.append(candidate)
+        
+        with open('user.json', 'w') as outfile:  
+            json.dump(self.candidates, outfile)
+
+
+class Current_User():
+    def __init__(self, name, password):
+        self.user_name = name
+        self.password = password
+        self.user_type = 0
+
+    def update(self, name, password):
+        self.user_name = name
+        self.password = password
+
+    def set_user_type(self, user_type):
+        self.user_type = user_type
+
