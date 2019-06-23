@@ -202,6 +202,18 @@ class Candidate:
 
         with open('candidate.json', 'w') as outfile:  
             json.dump(self.candidates, outfile)
+class Current_User():
+    def __init__(self, name, password):
+        self.user_name = name
+        self.password = password
+        self.user_type = 0
+
+    def update(self, name, password):
+        self.user_name = name
+        self.password = password
+
+    def set_user_type(self, user_type):
+        self.user_type = user_type
 
             
 app = Flask(__name__)
