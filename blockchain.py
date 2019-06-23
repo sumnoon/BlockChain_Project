@@ -133,13 +133,13 @@ class User:
         # print(self.accounts)
         
     
-    def add_account(self, user_name, user_password, voted):
+    def add_account(self, user_name, user_password):
         
         account = {
             'user_id': len(self.accounts) + 1,
             'user_name': user_name,
             'user_password': user_password,
-            'voted': False, 
+            'voted': 0, 
             'user_type': 0
         }
 
@@ -154,7 +154,7 @@ class User:
         index = 0
         for account in self.accounts:
             if(account['user_id'] == user_id):
-                self.accounts[index]['voted'] = True
+                self.accounts[index]['voted'] = 1
                 with open('user.json', 'w') as outfile:  
                     json.dump(self.accounts, outfile)
                 return
@@ -171,48 +171,7 @@ class User:
                 return False
         return False 
 
-    class Candidate:
 
-    def __init__(self):
-        self.candidates = []
-        self.load_candidate()
-
-
-    def load_candidate(self):
-        with open('candidate.json') as candidates:  
-            all_candidate = json.load(candidates)
-            for candidate in all_candidate:
-                self.candidates.append(candidate) 
-        
-        print(self.candidates)
-
-    
-    def add_candidate(self, candidate_name):
-        
-        candidate = {
-            'candidate_id': len(self.candidates) + 1,
-            'candidate_name': candidate_name,
-            'vote_count': 0
-        }
-
-        self.candidates.append(candidate)
-        
-        with open('user.json', 'w') as outfile:  
-            json.dump(self.candidates, outfile)
-
-
-class Current_User():
-    def __init__(self, name, password):
-        self.user_name = name
-        self.password = password
-        self.user_type = 0
-
-    def update(self, name, password):
-        self.user_name = name
-        self.password = password
-
-    def set_user_type(self, user_type):
-        self.user_type = user_type
 
 app = Flask(__name__)
 CORS(app)
