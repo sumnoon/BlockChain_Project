@@ -37,12 +37,17 @@ class Blockchain:
 
         with open('blockchain.json', 'w') as outfile:  
             json.dump(self.chain, outfile)
+        with open('static/bc/blockchain.json', 'w') as outfile:  
+            json.dump(self.chain, outfile)
 
+    def load_block(self):
+        with open('static/bc/blockchain.json') as blockchain:  
+            blocks = json.load(blockchain)
+            for block in blocks:
+                self.chain.append(block) 
 
     def register_node(self, node_url):
-        """
-        Add a new node to the list of nodes
-        """
+        
         #Checking node_url has valid format
         parsed_url = urlparse(node_url)
         
@@ -57,9 +62,8 @@ class Blockchain:
 
 
     def submit_vote(self, candidate_id):
-        """
-        Add a vote to votes array if the signature verified
-        """
+        
+    
         vote = OrderedDict({'candidate_id': candidate_id})
 
         self.pending_votes.append(vote)
@@ -71,9 +75,7 @@ class Blockchain:
 
 
     def hash(self, block):
-        """
-        Create a SHA-256 hash of a block
-        """
+        
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
         
@@ -81,18 +83,14 @@ class Blockchain:
 
 
     def valid_proof(self, pending_votes, previous_hash, nonce, difficulty=MINING_DIFFICULTY):
-        """
-        Check if a hash value satisfies the mining conditions. This function is used within the proof_of_work function.
-        """
+        
         guess = (str(pending_votes)+str(previous_hash)+str(nonce)).encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:difficulty] == '0'*difficulty
 
 
     def proof_of_work(self):
-        """
-        Proof of work algorithm; Calculates nonce
-        """
+        
         last_block = self.chain[-1]
         last_hash = self.hash(last_block)
 
@@ -104,9 +102,7 @@ class Blockchain:
 
     
     def valid_chain(self, chain):
-        """
-        check if a blockchain is valid
-        """
+        
         last_block = chain[0]
         current_index = 1
 
