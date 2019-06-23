@@ -172,7 +172,38 @@ class User:
         return False 
 
 
+class Candidate:
 
+    def __init__(self):
+        self.candidates = []
+        self.load_candidate()
+
+
+    def load_candidate(self):
+        with open('candidate.json') as candidates:  
+            all_candidate = json.load(candidates)
+            for candidate in all_candidate:
+                self.candidates.append(candidate) 
+        
+        # print(self.candidates)
+
+    
+    def add_candidate(self, candidate_name):
+        
+        candidate = {
+            'candidate_id': len(self.candidates) + 1,
+            'candidate_name': candidate_name,
+            'vote_count': 0
+        }
+
+        self.candidates.append(candidate)
+        
+        # print(self.candidates)
+
+        with open('candidate.json', 'w') as outfile:  
+            json.dump(self.candidates, outfile)
+
+            
 app = Flask(__name__)
 CORS(app)
 
