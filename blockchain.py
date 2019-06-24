@@ -117,6 +117,7 @@ class Blockchain:
 
         return True
 
+
 class User:
 
     def __init__(self):
@@ -125,7 +126,7 @@ class User:
 
 
     def load_account(self):
-        with open('user.json') as users:  
+        with open('static/bc/user.json') as users:  
             accounts = json.load(users)
             for account in accounts:
                 self.accounts.append(account) 
@@ -147,13 +148,14 @@ class User:
         
         with open('user.json', 'w') as outfile:  
             json.dump(self.accounts, outfile)
-
+        with open('static/bc/user.json', 'w') as outfile:  
+            json.dump(self.accounts, outfile)
     
-    def update_voted(self, user_id):
+    def update_voted(self, user_name):
         
         index = 0
         for account in self.accounts:
-            if(account['user_id'] == user_id):
+            if(account['user_name'] == user_name):
                 self.accounts[index]['voted'] = 1
                 with open('user.json', 'w') as outfile:  
                     json.dump(self.accounts, outfile)
@@ -167,9 +169,11 @@ class User:
             if(account['user_name'] == username):
                 if(account['user_password'] == user_password):
                     curr_user.set_user_type(account['user_type'])
+                    curr_user.set_voted(account['voted'])
                     return True
                 return False
         return False 
+
 
 
 class Candidate:
@@ -180,7 +184,7 @@ class Candidate:
 
 
     def load_candidate(self):
-        with open('candidate.json') as candidates:  
+        with open('static/bc/candidate.json') as candidates:  
             all_candidate = json.load(candidates)
             for candidate in all_candidate:
                 self.candidates.append(candidate) 
@@ -188,11 +192,11 @@ class Candidate:
         # print(self.candidates)
 
     
-    def add_candidate(self, candidate_name):
-        
+    def add_candidate(self, candidate_name, candidate_centre):   
         candidate = {
             'candidate_id': len(self.candidates) + 1,
             'candidate_name': candidate_name,
+            'candidate_centre': candidate_centre,
             'vote_count': 0
         }
 
@@ -202,11 +206,33 @@ class Candidate:
 
         with open('candidate.json', 'w') as outfile:  
             json.dump(self.candidates, outfile)
+        with open('static/bc/candidate.json', 'w') as outfile:  
+            json.dump(self.candidates, outfile)
+
+    def update_candidate(self, cand_id):
+        index = 0
+        # print("hi")
+        cand_id = int(cand_id)
+        for candidate in self.candidates:
+            # print(type(candidate['candidate_id']))
+            if(candidate['candidate_id'] == cand_id):
+                # print("yo")
+                self.candidates[index]['vote_count'] += 1
+                
+                # print(self.candidates[index]['candidate_name'])
+                # print(self.candidates[index]['vote_count'])
+                with open('candidate.json', 'w') as outfile:  
+                    json.dump(self.candidates, outfile)
+                return
+            index += 1
+
+
 class Current_User():
     def __init__(self, name, password):
         self.user_name = name
         self.password = password
         self.user_type = 0
+        self.voted = 0
 
     def update(self, name, password):
         self.user_name = name
@@ -214,13 +240,25 @@ class Current_User():
 
     def set_user_type(self, user_type):
         self.user_type = user_type
+    
+    def set_voted(self, voted):
+        self.voted = voted
 
-            
+
 app = Flask(__name__)
 CORS(app)
 
 blockchain = Blockchain()
-curr_user = Current_User('test', 'test')
+curr_user = Current_User('Sumnoon', 'sum')
+all_usr = User()
+all_cand = Candidate()
+vote_complete = 0
+
+app.config['ENV'] = 'development'
+app.config['DEBUG'] = True
+app.config['TESTING'] = True
+
+
 
 @app.route('/')
 def index():
@@ -232,9 +270,7 @@ def signin():
     
     curr_user.update(request.form['username'], request.form['password'])
     
-    usr = User()
-    
-    validate = usr.validate_user()
+    validate = all_usr.validate_user()
 
     if(validate == True):
         if curr_user.user_type == 1:
@@ -253,34 +289,93 @@ def dashboard():
         return render_template("user_dashboard.html")
 
 
+
+
 @app.route('/addvoter')
 def addvoter():
     return render_template("add_voter.html")
+
+@app.route('/submit_voter', methods = ['POST'])
+def submit_voter():
+    all_usr.add_account(request.form['username'], request.form['password'])
+    return render_template("add_voter.html")
+
+
+
 
 
 @app.route('/addcandidate')
 def addcandidate():
     return render_template("add_candidate.html")
 
+@app.route('/submit_candidate', methods = ['POST'])
+def submit_candidate():
+    all_cand.add_candidate(request.form['username'],request.form['centre'])
+    return render_template("add_candidate.html")
+
+
+
+
 
 @app.route('/addvote')
 def addvote():
-    return render_template("add_vote.html")
+    if(curr_user.voted == 1): return render_template("add_vote.html", content = curr_user) 
+    return render_template("add_vote.html", content = all_cand.candidates)
+
+@app.route('/submitvote', methods = ['POST'])
+def submit_vote():
+
+    # print("name:" + curr_user.user_name + "vote: {}".format(curr_user.voted))
+    if(curr_user.voted == 1):
+        return render_template("user_dashboard.html")
+
+    blockchain.submit_vote(request.form['cand_id'])
+    all_usr.update_voted(curr_user.user_name)
+    curr_user.set_voted(1)
+    all_cand.update_candidate(request.form['cand_id'])
+
+    return render_template("user_dashboard.html")
+
+
+
+@app.route('/publish_result', methods = ['POST'])
+def publish_result():
+    global vote_complete
+    vote_complete = 1
+    if curr_user.user_type == 1:
+        return render_template("view_results.html", content = all_cand.candidates)
+    else:
+        return render_template("view_result.html", content = all_cand.candidates)
 
 
 @app.route('/view_result')
 def vote_result():
-    return render_template("view_result.html")
+    if curr_user.user_type == 1:
+        if vote_complete == 0:
+            return render_template("view_results.html", content = vote_complete)
+        return render_template("view_results.html", content = all_cand.candidates)
+    else:
+        if vote_complete == 0:
+            return render_template("view_result.html", content = vote_complete)
+        return render_template("view_result.html", content = all_cand.candidates)
 
 
 @app.route('/view_voters')
 def view_voters():
-    return render_template("view_voters.html")
+    if curr_user.user_type == 1:
+        return render_template("view_voters.html", content = all_usr.accounts)
+    else:
+        return render_template("view_voter.html", content = all_usr.accounts)
 
 
 @app.route('/view_candidates')
 def view_candidates():
-    return render_template("view_candidates.html")
+    if curr_user.user_type == 1:
+        return render_template("view_candidates.html", content = all_cand.candidates)
+    else:
+        return render_template("view_candidate.html", content = all_cand.candidates)
+
+
 
 
 
