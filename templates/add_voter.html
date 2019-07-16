@@ -12,6 +12,7 @@
 	<link rel="stylesheet" href="/static/vendor/chartist/css/chartist-custom.css">
 	<link rel="stylesheet" href="/static/css/main.css">
 	<link rel="stylesheet" href="/static/css/admin.css">
+    
 
 	<link rel="stylesheet" type="text/css" href="/static/css/sweetalert.css">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
@@ -92,36 +93,52 @@
 </div>
 <!-- END LEFT SIDEBAR -->
 <div class="main">
-	<!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT -->
 	<div class="main-content">
-		<div class="container-fluid">
-			<!-- OVERVIEW -->
+	<div class="container-fluid">
+            <!-- OVERVIEW -->
     <div class="row">
     	<div class="col-md-12">
             <div class="panel panel-headline">
-    			<div class="panel-heading">Voter Registration</div>
+                <div class="panel-heading">Voter Registration</div>
+                {% if content != 0 %}
+                <script>
+                    Swal.fire("Hello");
+                </script>
+                {% endif %}
     			<div class="panel-body">
+                    <form class="form-auth-small" action="/submit_voter" method="post">
+                        <div class="form-group">
+                            <label for="title">Voter Name</label>
 
-					<div class="form-group">
-						<label for="title">Voter Name</label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                <input class="form-control voter-firstname" placeholder="Name" name="username" type="text">
+                            </div>
+                        </div>
 
-						<div class="input-group">
-							<span class="input-group-addon"><i class="fa fa-user"></i></span>
-							<input class="form-control voter-firstname" placeholder="Name" name="firstname" type="text">
-						</div>
-					</div>
+                        <div class="form-group">
+                            <label for="title">Voter Password</label>
 
-					<div class="form-group">
-						<label for="title">Voter Password</label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                <input class="form-control voter-lastname" placeholder="Password" name="password" type="password">
+                        </div>
 
-						<div class="input-group">
-							<span class="input-group-addon"><i class="fa fa-user"></i></span>
-							<input class="form-control voter-lastname" placeholder="Password" name="lastname" type="password">
-						</div>
-					</div>
-
-    				<button type="submit" class="btn btn-primary btn-email">Add Voter</button>
-
+                        <div class="form-group">
+                                <label for="title">Voter Centre</label>
+                                <select type="centre" class="form-control vote-id" id="centre" name="centre"> 
+                                        <option value="Chittagong - 2">Chittagong - 2</option>
+                                        <option value="Chittagong - 9">Chittagong - 9</option>
+                                        <option value="Chittagong - 10">Chittagong - 10</option>
+                            
+                                </select>
+                            </div>
+                            
+                        </div>
+                        
+    				    <button type="submit" class="btn btn-primary btn-email">Add Voter</button>
+                    </form>
     			</div>
     		</div>
     	</div>

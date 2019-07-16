@@ -134,11 +134,12 @@ class User:
         # print(self.accounts)
         
     
-    def add_account(self, user_name, user_password):
+    def add_account(self, user_name, user_password, user_centre):
         
         account = {
             'user_id': len(self.accounts) + 1,
             'user_name': user_name,
+            'user_centre': user_centre,
             'user_password': user_password,
             'voted': 0, 
             'user_type': 0
@@ -165,14 +166,17 @@ class User:
     def validate_user(self):
         username = curr_user.user_name
         user_password = curr_user.password
+        user_centre = curr_user.user_centre
+        print(username)
+        print(user_password)
+        print(user_centre)
         for account in self.accounts:
-            if(account['user_name'] == username):
-                if(account['user_password'] == user_password):
-                    curr_user.set_user_type(account['user_type'])
-                    curr_user.set_voted(account['voted'])
-                    return True
-                return False
-        return False 
+            if( account['user_name'] == username and account['user_password'] == user_password and account['user_centre'] == user_centre ):
+                curr_user.set_user_type(account['user_type'])
+                curr_user.set_voted(account['voted'])
+                return True
+        return False
+
 
 
 
@@ -209,33 +213,40 @@ class Candidate:
         with open('static/bc/candidate.json', 'w') as outfile:  
             json.dump(self.candidates, outfile)
 
-    def update_candidate(self, cand_id):
+    def update_candidate(self, cand_id, cand_centre):
         index = 0
         # print("hi")
         cand_id = int(cand_id)
+        cand_name = self.candidates[cand_id-1]['candidate_name']
+        #print(cand_name)
+        #print(cand_centre)
         for candidate in self.candidates:
             # print(type(candidate['candidate_id']))
-            if(candidate['candidate_id'] == cand_id):
-                # print("yo")
-                self.candidates[index]['vote_count'] += 1
-                
-                # print(self.candidates[index]['candidate_name'])
-                # print(self.candidates[index]['vote_count'])
-                with open('candidate.json', 'w') as outfile:  
-                    json.dump(self.candidates, outfile)
-                return
+            if(candidate['candidate_name'] == cand_name):
+                if(candidate['candidate_centre'] == cand_centre):
+                    # print("yo")
+                    self.candidates[index]['vote_count'] += 1
+                    # print(self.candidates[index]['candidate_name'])
+                    # print(self.candidates[index]['vote_count'])
+                    with open('candidate.json', 'w') as outfile:  
+                        json.dump(self.candidates, outfile)
+                    with open('static/bc/candidate.json', 'w') as outfile:  
+                        json.dump(self.candidates, outfile)
+                    return
             index += 1
 
 
 class Current_User():
-    def __init__(self, name, password):
+    def __init__(self, name, password, centre):
         self.user_name = name
         self.password = password
+        self.user_centre = centre
         self.user_type = 0
         self.voted = 0
 
-    def update(self, name, password):
+    def update(self, name, password, centre):
         self.user_name = name
+        self.user_centre = centre
         self.password = password
 
     def set_user_type(self, user_type):
@@ -249,11 +260,11 @@ app = Flask(__name__)
 CORS(app)
 
 blockchain = Blockchain()
-curr_user = Current_User('Sumnoon', 'sum')
+curr_user = Current_User('Sumnoon', 'sum', 'Chittagong - 2')
 all_usr = User()
 all_cand = Candidate()
 vote_complete = 0
-
+voter_added = 1
 app.config['ENV'] = 'development'
 app.config['DEBUG'] = True
 app.config['TESTING'] = True
@@ -268,10 +279,9 @@ def index():
 @app.route('/signin', methods = ['POST'])
 def signin():
     
-    curr_user.update(request.form['username'], request.form['password'])
-    
+    curr_user.update(request.form['username'], request.form['password'], request.form['centre'])
+    print(request.form['centre'])
     validate = all_usr.validate_user()
-
     if(validate == True):
         if curr_user.user_type == 1:
             return render_template("admin_dashboard.html")
@@ -297,11 +307,19 @@ def addvoter():
 
 @app.route('/submit_voter', methods = ['POST'])
 def submit_voter():
-    all_usr.add_account(request.form['username'], request.form['password'])
+    user_account = all_usr.accounts
+    username = request.form['username']
+    centre = request.form['centre']
+    for account in user_account:
+        if account['user_name'] == username and account['user_centre'] == centre:
+            return render_template("error_insertion.html", content = 0)
+    all_usr.add_account(request.form['username'], request.form['password'], request.form['centre'])
     return render_template("add_voter.html")
 
 
-
+@app.route('/go_back_voter', methods = ['POST'])
+def go_back_voter():
+    return render_template("add_voter.html")
 
 
 @app.route('/addcandidate')
@@ -310,21 +328,29 @@ def addcandidate():
 
 @app.route('/submit_candidate', methods = ['POST'])
 def submit_candidate():
+    candidate_account = all_cand.candidates
+    username = request.form['username']
+    centre = request.form['centre']
+    for account in candidate_account:
+        if account['candidate_name'] == username and account['candidate_centre'] == centre:
+            return render_template("error_insertion.html", content = 1)
     all_cand.add_candidate(request.form['username'],request.form['centre'])
     return render_template("add_candidate.html")
 
 
-
+@app.route('/go_back_candidate', methods = ['POST'])
+def go_back_candidate():
+    return render_template("add_candidate.html")
 
 
 @app.route('/addvote')
 def addvote():
     if(curr_user.voted == 1): return render_template("add_vote.html", content = curr_user) 
-    return render_template("add_vote.html", content = all_cand.candidates)
+    return render_template("add_vote.html", content = all_cand.candidates, content1 = curr_user)
 
 @app.route('/submitvote', methods = ['POST'])
 def submit_vote():
-
+    print(request.form['cand_id'])
     # print("name:" + curr_user.user_name + "vote: {}".format(curr_user.voted))
     if(curr_user.voted == 1):
         return render_template("user_dashboard.html")
@@ -332,7 +358,7 @@ def submit_vote():
     blockchain.submit_vote(request.form['cand_id'])
     all_usr.update_voted(curr_user.user_name)
     curr_user.set_voted(1)
-    all_cand.update_candidate(request.form['cand_id'])
+    all_cand.update_candidate(request.form['cand_id'],request.form['cand_centre'])
 
     return render_template("user_dashboard.html")
 
@@ -343,10 +369,28 @@ def publish_result():
     global vote_complete
     vote_complete = 1
     if curr_user.user_type == 1:
+        user_account = all_usr.accounts
+        for account in user_account:
+            account['voted'] = 1
         return render_template("view_results.html", content = all_cand.candidates)
     else:
         return render_template("view_result.html", content = all_cand.candidates)
 
+@app.route('/start_voting')
+def begin_voting():
+    global vote_complete
+    vote_complete = 0
+    user_account = all_usr.accounts
+    cand_account = all_cand.candidates
+    for account in user_account:
+        if account['user_type'] == 0:
+            account['voted'] = 0
+    for account in cand_account:
+        account['vote_count'] = 0
+    if curr_user.user_type == 1:
+        if vote_complete == 0:
+            return render_template("view_results.html", content = vote_complete)
+        return render_template("view_results.html", content = all_cand.candidates)
 
 @app.route('/view_result')
 def vote_result():
@@ -358,6 +402,7 @@ def vote_result():
         if vote_complete == 0:
             return render_template("view_result.html", content = vote_complete)
         return render_template("view_result.html", content = all_cand.candidates)
+
 
 
 @app.route('/view_voters')

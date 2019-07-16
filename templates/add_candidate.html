@@ -12,6 +12,7 @@
 	<link rel="stylesheet" href="/static/vendor/chartist/css/chartist-custom.css">
 	<link rel="stylesheet" href="/static/css/main.css">
 	<link rel="stylesheet" href="/static/css/admin.css">
+  
 
 	<link rel="stylesheet" type="text/css" href="/static/css/sweetalert.css">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
@@ -99,20 +100,28 @@
     <div class="row">
     	<div class="col-md-12">
             <div class="panel panel-headline">
-    			<div class="panel-heading">Voter Registration</div>
+    			<div class="panel-heading">Candidate Registration</div>
     			<div class="panel-body">
+                    <form class="form-auth-small" action="/submit_candidate" method="post" id = "add_candy">
 
-					<div class="form-group">
-						<label for="title">Candidate Name</label>
+                        <div class="form-group">
+                            <label for="title">Candidate Name</label>
 
-						<div class="input-group">
-							<span class="input-group-addon"><i class="fa fa-user"></i></span>
-							<input class="form-control voter-firstname" placeholder="Name" name="firstname" type="text">
-						</div>
-					</div>
-
-    				<button type="submit" class="btn btn-primary btn-email">Add Candidate</button>
-
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                <input class="form-control voter-firstname" placeholder="Name" name="username" type="text">
+                            </div>  
+                            <label for="title">Candidate Centre</label>
+                            <select name="centre" class="form-control vote-id" form = "add_candy"> 
+                                <option value="Chittagong - 2">Chittagong - 2</option>
+                                <option value="Chittagong - 9">Chittagong - 9</option>
+                                <option value="Chittagong - 10">Chittagong - 10</option>
+                    
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-email">Add Candidate</button>
+                    </form>
     			</div>
     		</div>
     	</div>

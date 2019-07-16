@@ -35,15 +35,23 @@
                         
 
 
-    <form class="form-auth-small" action="/signin" method="post">
+    <form class="form-auth-small" action="/signin" method="post" id='voting'>
 		<div class="form-group">
 			<label for="username" class="control-label sr-only">Username</label>
-			<input type="input" class="form-control" id="username" name="username" value="Yasir" placeholder="username">
+			<input type="input" class="form-control" id="username" name="username" placeholder="User Name">
             		</div>
 		<div class="form-group">
 			<label for="password" class="control-label sr-only">Password</label>
-			<input type="password" class="form-control" id="password" name="password" value="abc123" placeholder="password">
-            		</div>
+			<input type="password" class="form-control" id="password" name="password" placeholder="Password">
+		</div>
+		<div class="form-group">
+			<select type="centre" class="form-control vote-id" id="centre" name="centre"> 
+					<option value="Chittagong - 2">Chittagong - 2</option>
+					<option value="Chittagong - 9">Chittagong - 9</option>
+					<option value="Chittagong - 10">Chittagong - 10</option>
+		
+			</select>
+		</div>
 		<button type="submit" class="btn btn-primary btn-lg btn-block">LOGIN</button>
 
             <input type="hidden" name="csrf_name"
